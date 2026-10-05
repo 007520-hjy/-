@@ -150,14 +150,16 @@
       const d = order.map(id => `${id === order[0] ? 'M' : 'L'}${centers[id].x},${centers[id].y}`).join(' ');
       const path = document.createElementNS(SVG_NS, 'path');
       path.setAttribute('d', d);
-      path.style.strokeDasharray = '6 8';
-      path.style.strokeDashoffset = '0';
+      path.setAttribute('pathLength', '1000');
+      path.style.strokeDasharray = '1000';
+      path.style.strokeDashoffset = '1000';
       constellation.appendChild(path);
-      order.slice(0, 5).forEach(id => {
+      order.slice(0, 5).forEach((id, i) => {
         const c = document.createElementNS(SVG_NS, 'circle');
         c.setAttribute('cx', centers[id].x);
         c.setAttribute('cy', centers[id].y);
         c.setAttribute('r', '4');
+        c.style.animationDelay = `${i * 0.45}s`;
         constellation.appendChild(c);
       });
       constellation.classList.remove('on');
