@@ -52,4 +52,18 @@ assert.strictEqual(deck[0].id, 0, '原数组不应被修改');
 assert.strictEqual(shuffled.length, 22);
 assert.deepStrictEqual(shuffled.map(c => c.id).sort((a, b) => a - b), CARDS.map(c => c.id), '洗牌后元素集合不变');
 console.log('Task1 测试通过');
+// Task 3: 总览文案
+const { buildOverview } = require('../script.js');
+const centerCard = CARDS[19]; // 太阳
+function mkSpread(ups) { // ups: 5 个布尔
+  return POSITIONS.map((pos, i) => ({ card: i === 0 ? centerCard : CARDS[i], positionId: pos.id, upright: ups[i] }));
+}
+assert.ok(buildOverview(mkSpread([true, true, true, true, true])).startsWith('今天运势极佳'), '全正位 → 大吉');
+assert.ok(buildOverview(mkSpread([true, true, true, false, false])).startsWith('今天运势上扬'), '3 正 → 吉');
+assert.ok(buildOverview(mkSpread([true, true, false, false, false])).startsWith('今天运势平稳'), '2 正 → 平');
+assert.ok(buildOverview(mkSpread([true, false, false, false, false])).startsWith('今天运势需要谨慎'), '1 正 → 谨慎');
+assert.ok(buildOverview(mkSpread([false, false, false, false, false])).startsWith('今天运势需要谨慎'), '0 正 → 谨慎');
+const text = buildOverview(mkSpread([true, false, false, false, false]));
+assert.ok(text.includes('「' + centerCard.keywords[0] + '」'), '总览应嵌入中心牌第一个关键词');
 console.log('Task2 测试通过');
+console.log('Task3 测试通过');

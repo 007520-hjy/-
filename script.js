@@ -101,7 +101,16 @@
     }));
   }
 
-  const api = { ROMAN, POSITIONS, CARDS, shuffleCards, drawSpread };
+  function buildOverview(spread) {
+    const up = spread.filter(s => s.upright).length;
+    const kw = spread.find(s => s.positionId === 'center').card.keywords[0];
+    if (up >= 4) return `今天运势极佳——「${kw}」的能量贯穿全场，想做的事尽管放手去做，好运站在你这边。`;
+    if (up === 3) return `今天运势上扬，「${kw}」是你的关键词，主动一点，机会会主动来敲门。`;
+    if (up === 2) return `今天运势平稳，围绕「${kw}」徐徐展开，稳扎稳打，小惊喜就在路上。`;
+    return `今天运势需要谨慎，「${kw}」提醒你先守后攻，慢一点，稳住就是赢。`;
+  }
+
+  const api = { ROMAN, POSITIONS, CARDS, shuffleCards, drawSpread, buildOverview };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   global.Tarot = api;
 })(typeof window !== 'undefined' ? window : globalThis);
