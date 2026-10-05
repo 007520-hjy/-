@@ -81,7 +81,27 @@
       reversed: '今天差最后一公里，别急着收工，补上缺口就是满分。' },
   ];
 
-  const api = { ROMAN, POSITIONS, CARDS };
+  function shuffleCards(deck, rng) {
+    rng = rng || Math.random;
+    const arr = deck.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function drawSpread(rng) {
+    rng = rng || Math.random;
+    const picked = shuffleCards(CARDS, rng).slice(0, POSITIONS.length);
+    return POSITIONS.map((pos, i) => ({
+      card: picked[i],
+      positionId: pos.id,
+      upright: rng() < 0.5,
+    }));
+  }
+
+  const api = { ROMAN, POSITIONS, CARDS, shuffleCards, drawSpread };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   global.Tarot = api;
 })(typeof window !== 'undefined' ? window : globalThis);
