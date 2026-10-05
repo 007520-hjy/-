@@ -8,7 +8,7 @@
   :root {
     --night-1: #0a0e1f; --night-2: #161d3c; --gold: #d4af37; --gold-lt: #f0d98c;
     --ink: #e8e2d0; --ink-dim: #9a94b8; --violet: #8b7fd6; --violet-lt: #a99ff0;
-    --card-w: 240px; --card-h: 360px;
+    --card-w: 240px; --card-h: 320px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -33,7 +33,7 @@
 
   /* 牌堆 */
   #deck-area { display: flex; flex-direction: column; align-items: center; gap: 24px; margin: 24px 0 48px; }
-  #deck { position: relative; width: 180px; height: 270px; cursor: pointer; transition: transform .2s; }
+  #deck { position: relative; width: 180px; height: 240px; cursor: pointer; transition: transform .2s; }
   #deck:hover { transform: translateY(-6px); }
   #deck:focus-visible { outline: 2px solid var(--gold-lt); outline-offset: 8px; border-radius: 12px; }
   #deck .pile {
@@ -123,7 +123,7 @@
     display: flex; gap: 20px; align-items: flex-start; padding: 18px 22px;
     background: rgba(22, 29, 60, .55); border: 1px solid rgba(212, 175, 55, .25); border-radius: 14px;
   }
-  .detail-item img { width: 96px; height: 144px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold); flex-shrink: 0; }
+  .detail-item img { width: 96px; height: 128px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold); flex-shrink: 0; }
   .detail-item img.reversed { transform: rotate(180deg); }
   .detail-item h3 { font-size: 15px; letter-spacing: 2px; color: var(--gold-lt); }
   .detail-item h3 small { color: var(--ink-dim); letter-spacing: 1px; margin-left: 8px; font-weight: 400; }
