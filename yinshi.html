@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日运势 · 塔罗五牌阵</title>
+<style>
+  :root {
+    --night-1: #0a0e1f; --night-2: #161d3c; --gold: #d4af37; --gold-lt: #f0d98c;
+    --ink: #e8e2d0; --ink-dim: #9a94b8; --violet: #8b7fd6; --violet-lt: #a99ff0;
+    --card-w: 240px; --card-h: 360px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh; color: var(--ink);
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(ellipse at 50% -10%, #2a3566 0%, var(--night-2) 45%, var(--night-1) 100%);
+    overflow-x: hidden;
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars span { position: absolute; background: var(--gold-lt); border-radius: 50%; opacity: .2; animation: twinkle ease-in-out infinite alternate; }
+  @keyframes twinkle { from { opacity: .12; } to { opacity: .9; } }
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  header { text-align: center; margin-bottom: 40px; }
+  h1 {
+    font-family: Georgia, "Noto Serif SC", "STSong", serif; font-size: 42px; letter-spacing: 6px;
+    background: linear-gradient(180deg, var(--gold-lt), var(--gold));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle { margin-top: 10px; color: var(--ink-dim); letter-spacing: 4px; font-size: 14px; }
+  #today { margin-top: 6px; color: var(--gold); font-size: 13px; letter-spacing: 2px; }
+
+  /* 牌堆 */
+  #deck-area { display: flex; flex-direction: column; align-items: center; gap: 24px; margin: 24px 0 48px; }
+  #deck { position: relative; width: 180px; height: 270px; cursor: pointer; transition: transform .2s; }
+  #deck:hover { transform: translateY(-6px); }
+  #deck:focus-visible { outline: 2px solid var(--gold-lt); outline-offset: 8px; border-radius: 12px; }
+  #deck .pile {
+    position: absolute; inset: 0; border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(212, 175, 55, .6); box-shadow: 0 6px 24px rgba(0, 0, 0, .5);
+  }
+  #deck .pile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #deck .pile:nth-child(1) { transform: translate(-7px, -7px) rotate(-2deg); }
+  #deck .pile:nth-child(2) { transform: translate(0, 0); }
+  #deck .pile:nth-child(3) { transform: translate(7px, 7px) rotate(2deg); }
+  #deck.shuffling .pile { animation: shuffle .5s ease-in-out infinite alternate; }
+  #deck.shuffling .pile:nth-child(2) { animation-delay: .12s; }
+  #deck.shuffling .pile:nth-child(3) { animation-delay: .24s; }
+  @keyframes shuffle {
+    from { transform: translateX(-10px) rotate(-4deg); }
+    to { transform: translateX(10px) rotate(4deg); }
+  }
+  .btn {
+    padding: 14px 40px; font-size: 16px; letter-spacing: 6px; color: var(--night-1);
+    background: linear-gradient(135deg, var(--gold-lt), var(--gold));
+    border: none; border-radius: 999px; cursor: pointer; font-weight: 700;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, .35); transition: transform .15s, box-shadow .15s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(212, 175, 55, .5); }
+  .btn:focus-visible { outline: 2px solid var(--gold-lt); outline-offset: 4px; }
+  #redraw { display: none; margin: 32px auto 0; }
+
+  /* 十字阵 */
+  #spread {
+    display: none; position: relative; margin: 0 auto; max-width: 900px;
+    grid-template-rows: repeat(3, minmax(var(--card-h), auto));
+    grid-template-columns: repeat(3, minmax(var(--card-w), 1fr));
+    gap: 20px 24px; align-items: center; justify-items: center;
+  }
+  #spread.on { display: grid; }
+  .card-slot { perspective: 1400px; width: var(--card-w); }
+  .card-slot[data-pos="center"] { grid-area: 2 / 2; }
+  .card-slot[data-pos="top"] { grid-area: 1 / 2; }
+  .card-slot[data-pos="bottom"] { grid-area: 3 / 2; }
+  .card-slot[data-pos="left"] { grid-area: 2 / 1; }
+  .card-slot[data-pos="right"] { grid-area: 2 / 3; }
+  .pos-label {
+    text-align: center; color: var(--gold); letter-spacing: 4px; font-size: 13px; margin-bottom: 8px;
+  }
+  .card-inner { position: relative; width: var(--card-w); height: var(--card-h); transform-style: preserve-3d; transition: transform .9s cubic-bezier(.4, .1, .2, 1); }
+  .card-slot.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px; overflow: hidden;
+    border: 2px solid var(--gold); box-shadow: 0 10px 32px rgba(0, 0, 0, .55);
+  }
+  .card-back-face { transform: rotateY(180deg); background: #12162e; }
+  .card-back-face img, .card-front-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-front-face img.reversed { transform: rotate(180deg); }
+  .card-front-face img.failed { display: none; }
+  .card-fallback {
+    display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
+    font-family: Georgia, serif; font-size: 64px; color: var(--gold-lt); background: radial-gradient(circle at 50% 40%, #232c58, #10142c);
+  }
+  .card-front-face img.failed ~ .card-fallback { display: flex; }
+  .card-info { margin-top: 10px; text-align: center; min-height: 92px; }
+  .card-name { font-size: 17px; letter-spacing: 2px; color: var(--gold-lt); }
+  .card-tag {
+    display: inline-block; margin-top: 6px; padding: 2px 12px; font-size: 12px; letter-spacing: 3px;
+    border: 1px solid var(--gold); border-radius: 999px; color: var(--gold);
+  }
+  .card-tag.rev { border-color: var(--violet); color: var(--violet-lt); }
+  .card-read { margin-top: 8px; font-size: 13px; line-height: 1.7; color: var(--ink-dim); }
+
+  /* 星座连线（签名时刻） */
+  .constellation { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  .constellation path { fill: none; stroke: var(--gold); stroke-width: 1.5; opacity: 0; stroke-dasharray: 6 8; }
+  .constellation.on path { opacity: .65; animation: drawline 2.4s linear forwards; }
+  .constellation circle { fill: var(--gold-lt); opacity: 0; }
+  .constellation.on circle { animation: pop .5s ease-out forwards; }
+  @keyframes drawline { to { stroke-dashoffset: -1400; } }
+  @keyframes pop { from { opacity: 0; r: 0; } to { opacity: .9; } }
+
+  /* 总览与详解 */
+  #summary {
+    display: none; margin: 48px auto 0; max-width: 640px; padding: 24px 32px; text-align: center;
+    font-size: 17px; line-height: 1.9; color: var(--ink);
+    background: rgba(22, 29, 60, .75); border: 1px solid rgba(212, 175, 55, .45); border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+  }
+  #detail-list { margin: 40px auto 0; max-width: 720px; display: flex; flex-direction: column; gap: 16px; }
+  .detail-item {
+    display: flex; gap: 20px; align-items: flex-start; padding: 18px 22px;
+    background: rgba(22, 29, 60, .55); border: 1px solid rgba(212, 175, 55, .25); border-radius: 14px;
+  }
+  .detail-item img { width: 96px; height: 144px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold); flex-shrink: 0; }
+  .detail-item img.reversed { transform: rotate(180deg); }
+  .detail-item h3 { font-size: 15px; letter-spacing: 2px; color: var(--gold-lt); }
+  .detail-item h3 small { color: var(--ink-dim); letter-spacing: 1px; margin-left: 8px; font-weight: 400; }
+  .detail-item p { margin-top: 6px; font-size: 14px; line-height: 1.8; color: var(--ink); }
+
+  footer { text-align: center; margin-top: 56px; color: var(--ink-dim); font-size: 12px; letter-spacing: 3px; }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 30px; letter-spacing: 4px; }
+    #spread.on { display: flex; flex-direction: column; gap: 28px; }
+    .detail-item { flex-direction: column; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stars span { animation: none; opacity: .5; }
+    #deck.shuffling .pile { animation: none; }
+    .card-inner { transition: none; }
+    .constellation.on path, .constellation.on circle { animation: none; opacity: .65; }
+  }
+</style>
+</head>
+<body>
+<div class="stars" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <h1>今日运势 · 塔罗五牌阵</h1>
+    <p class="subtitle">— 静心 · 洗牌 · 听一听今天的答案 —</p>
+    <p id="today"></p>
+  </header>
+
+  <section id="deck-area">
+    <div id="deck" title="开始抽牌" role="button" tabindex="0">
+      <div class="pile"><img src="images/card-back.png" alt=""></div>
+      <div class="pile"><img src="images/card-back.png" alt=""></div>
+      <div class="pile"><img src="images/card-back.png" alt=""></div>
+    </div>
+    <button id="start-btn" class="btn">开始抽牌</button>
+  </section>
+
+  <section id="spread" aria-label="五牌十字阵">
+    <svg class="constellation" aria-hidden="true"></svg>
+    <article class="card-slot" data-pos="center">
+      <p class="pos-label">现状</p>
+      <div class="card-inner">
+        <figure class="card-face card-front-face">
+          <img class="card-img" alt="牌面" onerror="this.classList.add('failed')">
+          <span class="card-fallback"></span>
+        </figure>
+        <figure class="card-face card-back-face"><img src="images/card-back.png" alt=""></figure>
+      </div>
+      <div class="card-info"><p class="card-name"></p><span class="card-tag"></span><p class="card-read"></p></div>
+    </article>
+    <article class="card-slot" data-pos="top">
+      <p class="pos-label">障碍</p>
+      <div class="card-inner">
+        <figure class="card-face card-front-face">
+          <img class="card-img" alt="牌面" onerror="this.classList.add('failed')">
+          <span class="card-fallback"></span>
+        </figure>
+        <figure class="card-face card-back-face"><img src="images/card-back.png" alt=""></figure>
+      </div>
+      <div class="card-info"><p class="card-name"></p><span class="card-tag"></span><p class="card-read"></p></div>
+    </article>
+    <article class="card-slot" data-pos="bottom">
+      <p class="pos-label">潜在</p>
+      <div class="card-inner">
+        <figure class="card-face card-front-face">
+          <img class="card-img" alt="牌面" onerror="this.classList.add('failed')">
+          <span class="card-fallback"></span>
+        </figure>
+        <figure class="card-face card-back-face"><img src="images/card-back.png" alt=""></figure>
+      </div>
+      <div class="card-info"><p class="card-name"></p><span class="card-tag"></span><p class="card-read"></p></div>
+    </article>
+    <article class="card-slot" data-pos="left">
+      <p class="pos-label">目标</p>
+      <div class="card-inner">
+        <figure class="card-face card-front-face">
+          <img class="card-img" alt="牌面" onerror="this.classList.add('failed')">
+          <span class="card-fallback"></span>
+        </figure>
+        <figure class="card-face card-back-face"><img src="images/card-back.png" alt=""></figure>
+      </div>
+      <div class="card-info"><p class="card-name"></p><span class="card-tag"></span><p class="card-read"></p></div>
+    </article>
+    <article class="card-slot" data-pos="right">
+      <p class="pos-label">建议</p>
+      <div class="card-inner">
+        <figure class="card-face card-front-face">
+          <img class="card-img" alt="牌面" onerror="this.classList.add('failed')">
+          <span class="card-fallback"></span>
+        </figure>
+        <figure class="card-face card-back-face"><img src="images/card-back.png" alt=""></figure>
+      </div>
+      <div class="card-info"><p class="card-name"></p><span class="card-tag"></span><p class="card-read"></p></div>
+    </article>
+  </section>
+
+  <section id="summary" aria-live="polite"></section>
+  <div id="detail-list"></div>
+  <button id="redraw" class="btn">再测一次</button>
+
+  <footer>✦ 塔罗只是镜子，答案始终在你心里 ✦</footer>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
