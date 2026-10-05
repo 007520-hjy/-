@@ -110,7 +110,154 @@
     return `今天运势需要谨慎，「${kw}」提醒你先守后攻，慢一点，稳住就是赢。`;
   }
 
-  const api = { ROMAN, POSITIONS, CARDS, shuffleCards, drawSpread, buildOverview };
+  function initPage() {
+    const $ = id => document.getElementById(id);
+    const deck = $('deck'), startBtn = $('start-btn'), spreadEl = $('spread');
+    const summaryEl = $('summary'), detailList = $('detail-list'), redrawBtn = $('redraw');
+    const todayEl = $('today');
+    const constellation = spreadEl.querySelector('.constellation');
+
+    todayEl.textContent = new Date().toLocaleDateString('zh-CN', {
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
+    });
+
+    const stars = document.querySelector('.stars');
+    for (let i = 0; i < 120; i++) {
+      const s = document.createElement('span');
+      const size = Math.random() * 2 + 1;
+      s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;` +
+        `width:${size}px;height:${size}px;animation-delay:${Math.random() * 4}s;` +
+        `animation-duration:${2 + Math.random() * 3}s`;
+      stars.appendChild(s);
+    }
+
+    const imgSrc = c => `images/card-${String(c.id).padStart(2, '0')}.png`;
+    const FLIP_BASE = 1200, FLIP_STEP = 900;
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    function drawConstellation() {
+      const rect = spreadEl.getBoundingClientRect();
+      constellation.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+      constellation.setAttribute('width', rect.width);
+      constellation.setAttribute('height', rect.height);
+      constellation.innerHTML = '';
+      const centers = {};
+      POSITIONS.forEach(pos => {
+        const r = spreadEl.querySelector(`[data-pos="${pos.id}"] .card-inner`).getBoundingClientRect();
+        centers[pos.id] = { x: r.left - rect.left + r.width / 2, y: r.top - rect.top + r.height / 2 };
+      });
+      const order = ['center', 'top', 'bottom', 'right', 'left', 'center'];
+      const d = order.map(id => `${id === order[0] ? 'M' : 'L'}${centers[id].x},${centers[id].y}`).join(' ');
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', d);
+      path.style.strokeDasharray = '6 8';
+      path.style.strokeDashoffset = '0';
+      constellation.appendChild(path);
+      order.slice(0, 5).forEach(id => {
+        const c = document.createElementNS(SVG_NS, 'circle');
+        c.setAttribute('cx', centers[id].x);
+        c.setAttribute('cy', centers[id].y);
+        c.setAttribute('r', '4');
+        constellation.appendChild(c);
+      });
+      constellation.classList.remove('on');
+      void constellation.getBoundingClientRect(); // 重启动画
+      constellation.classList.add('on');
+    }
+
+    function resetConstellation() {
+      constellation.classList.remove('on');
+      constellation.innerHTML = '';
+    }
+
+    function deal() {
+      const spread = drawSpread();
+      spreadEl.classList.add('on');
+      deck.closest('#deck-area').style.display = 'none';
+      summaryEl.style.display = 'none';
+      detailList.innerHTML = '';
+      resetConstellation();
+
+      spreadEl.querySelectorAll('.card-slot').forEach(slot => {
+        slot.classList.remove('flipped');
+        slot.querySelector('.card-img').className = 'card-img';
+        slot.querySelector('.card-img').removeAttribute('src');
+        slot.querySelector('.card-name').textContent = '';
+        slot.querySelector('.card-tag').textContent = '';
+        slot.querySelector('.card-tag').classList.remove('rev');
+        slot.querySelector('.card-read').textContent = '';
+        slot.querySelector('.card-fallback').textContent = '';
+      });
+
+      POSITIONS.forEach((pos, i) => {
+        const entry = spread[i];
+        const slot = spreadEl.querySelector(`[data-pos="${pos.id}"]`);
+        const img = slot.querySelector('.card-img');
+        img.src = imgSrc(entry.card);
+        if (!entry.upright) img.classList.add('reversed');
+        slot.querySelector('.card-fallback').textContent = ROMAN[entry.card.id];
+        slot.querySelector('.card-name').textContent = `${ROMAN[entry.card.id]} ${entry.card.nameZh}`;
+        const tag = slot.querySelector('.card-tag');
+        tag.textContent = entry.upright ? '正位' : '逆位';
+        if (!entry.upright) tag.classList.add('rev');
+        slot.querySelector('.card-read').textContent = entry.upright ? entry.card.upright : entry.card.reversed;
+        setTimeout(() => slot.classList.add('flipped'), FLIP_BASE + i * FLIP_STEP);
+      });
+
+      const item = (entry, pos) => {
+        const div = document.createElement('div');
+        div.className = 'detail-item';
+        const img = document.createElement('img');
+        img.src = imgSrc(entry.card);
+        img.alt = entry.card.nameZh;
+        if (!entry.upright) img.classList.add('reversed');
+        const body = document.createElement('div');
+        const h = document.createElement('h3');
+        h.textContent = `${pos.label} · ${entry.card.nameZh}（${entry.upright ? '正位' : '逆位'}）`;
+        h.appendChild(Object.assign(document.createElement('small'), { textContent: entry.card.nameEn }));
+        const p = document.createElement('p');
+        p.textContent = entry.upright ? entry.card.upright : entry.card.reversed;
+        body.append(h, p);
+        div.append(img, body);
+        return div;
+      };
+      setTimeout(() => {
+        spread.forEach((entry, i) => detailList.appendChild(item(entry, POSITIONS[i])));
+        summaryEl.textContent = buildOverview(spread);
+        summaryEl.style.display = 'block';
+        redrawBtn.style.display = 'block';
+        drawConstellation();
+      }, FLIP_BASE + POSITIONS.length * FLIP_STEP + 600);
+    }
+
+    function start() {
+      deck.classList.add('shuffling');
+      deck.style.pointerEvents = 'none';
+      setTimeout(() => {
+        deck.classList.remove('shuffling');
+        deck.style.pointerEvents = '';
+        deal();
+      }, 1200);
+    }
+
+    deck.addEventListener('click', start);
+    deck.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } });
+    startBtn.addEventListener('click', start);
+    redrawBtn.addEventListener('click', () => {
+      spreadEl.classList.remove('on');
+      resetConstellation();
+      deck.closest('#deck-area').style.display = '';
+      redrawBtn.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('resize', () => {
+      if (constellation.classList.contains('on')) drawConstellation();
+    });
+  }
+
+  const api = { ROMAN, POSITIONS, CARDS, shuffleCards, drawSpread, buildOverview, initPage };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  global.Tarot = api;
+  else global.Tarot = api;
+  if (typeof document !== 'undefined' && document.readyState !== 'loading') initPage();
+  else if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', initPage);
 })(typeof window !== 'undefined' ? window : globalThis);

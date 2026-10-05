@@ -66,4 +66,8 @@ assert.ok(buildOverview(mkSpread([false, false, false, false, false])).startsWit
 const text = buildOverview(mkSpread([true, false, false, false, false]));
 assert.ok(text.includes('「' + centerCard.keywords[0] + '」'), '总览应嵌入中心牌第一个关键词');
 console.log('Task2 测试通过');
+// Task 5: initPage 存在性（DOM 行为由 Task 7 浏览器人工验证）
+const { initPage } = require('../script.js');
+assert.strictEqual(typeof initPage, 'function', 'initPage 应为函数');
 console.log('Task3 测试通过');
+console.log('Task5 测试通过');
